@@ -107,11 +107,11 @@ func FindTrains(departureStation, arrivalStation, criteria string) (Trains, erro
 	//Перевіряємо правильність введення критерію сортування та сортуємо по ньому.
 	switch criteria {
 	case "price":
-		sort.Slice(result, func(i, j int) bool { return result[i].Price < result[j].Price })
+		sort.SliceStable(result, func(i, j int) bool { return result[i].Price < result[j].Price })
 	case "arrival-time":
-		sort.Slice(result, func(i, j int) bool { return result[i].ArrivalTime.Before(result[j].ArrivalTime) })
+		sort.SliceStable(result, func(i, j int) bool { return result[i].ArrivalTime.Before(result[j].ArrivalTime) })
 	case "departure-time":
-		sort.Slice(result, func(i, j int) bool { return result[i].DepartureTime.Before(result[j].DepartureTime) })
+		sort.SliceStable(result, func(i, j int) bool { return result[i].DepartureTime.Before(result[j].DepartureTime) })
 	default:
 		//якщо введено невалідний критерій повертаємо помилку
 		return nil, errors.New(unsCriteria)
