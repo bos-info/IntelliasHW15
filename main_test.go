@@ -6,6 +6,15 @@ import (
 	"time"
 )
 
+const (
+	//Errors Description
+	emptyDeptSt = "empty departure station"
+	badDeptSt   = "bad departure station input"
+	emptyArrSt  = "empty arrival station"
+	badArrSt    = "bad arrival station input"
+	unsCriteria = "unsupported criteria"
+)
+
 func TestFindTrainsSuccess(t *testing.T) {
 	assert := assert.New(t)
 	testsOK := map[string]struct {
