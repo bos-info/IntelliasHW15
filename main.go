@@ -79,7 +79,7 @@ func main() {
 
 //FindTrains шукаємо потяги що задовольняють введеним умовам користувача
 func FindTrains(departureStation, arrivalStation, criteria string) (Trains, error) {
-	//читаємо json та записуємо вичитані дані в
+	//записуємо підготовлені дані в trainsSlice
 	trainsSlice := readFile()
 	var depStationInt, arrStationInt int
 	//Перевіряємо валідність станції відправлення
