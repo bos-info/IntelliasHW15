@@ -25,8 +25,7 @@ const (
 	unsCriteria    = "unsupported criteria"
 	invalidJSON    = "JSON is invalid"
 	unmarshalError = "unmarshal error"
-	parseArrTime   = "bad parse arrival time"
-	parseDepTime   = "bad parse departure time"
+	parseErr       = "bad parse "
 )
 
 type Trains []Train
@@ -169,28 +168,52 @@ func (tr *Train) UnmarshalJSON(j []byte) error {
 	}
 	for k, v := range rawData {
 		if k == "trainId" {
-			tr.TrainID = int(v.(float64))
+			fl, ok := v.(float64)
+			if !ok {
+				return errors.New(parseErr + k)
+			}
+			tr.TrainID = int(fl)
 		}
 		if k == "departureStationId" {
-			tr.DepartureStationID = int(v.(float64))
+			fl, ok := v.(float64)
+			if !ok {
+				return errors.New(parseErr + k)
+			}
+			tr.DepartureStationID = int(fl)
 		}
 		if k == "arrivalStationId" {
-			tr.ArrivalStationID = int(v.(float64))
+			fl, ok := v.(float64)
+			if !ok {
+				return errors.New(parseErr + k)
+			}
+			tr.ArrivalStationID = int(fl)
 		}
 		if k == "price" {
-			tr.Price = float32(v.(float64))
+			fl, ok := v.(float64)
+			if !ok {
+				return errors.New(parseErr + k)
+			}
+			tr.Price = float32(fl)
 		}
 		if k == "arrivalTime" {
-			t, err := time.Parse(timeLayout, v.(string))
+			tv, ok := v.(string)
+			if !ok {
+				return errors.New(parseErr + k)
+			}
+			t, err := time.Parse(timeLayout, tv)
 			if err != nil {
-				return errors.New(parseArrTime)
+				return errors.New(parseErr + k)
 			}
 			tr.ArrivalTime = t
 		}
 		if k == "departureTime" {
-			t, err := time.Parse(timeLayout, v.(string))
+			tv, ok := v.(string)
+			if !ok {
+				return errors.New(parseErr + k)
+			}
+			t, err := time.Parse(timeLayout, tv)
 			if err != nil {
-				return errors.New(parseDepTime)
+				return errors.New(parseErr + k)
 			}
 			tr.DepartureTime = t
 		}
