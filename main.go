@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"sort"
@@ -17,6 +17,7 @@ const (
 	timeLayout     = "15:04:05"
 	countOfRecords = 3
 	fName          = "data.json"
+
 	//Errors Description
 	emptyDeptSt    = "empty departure station"
 	badDeptSt      = "bad departure station input"
@@ -69,14 +70,14 @@ func main() {
 	if result == nil {
 		fmt.Println("Відсутні потяги між вказанами станціями.")
 	}
-	for i := 0; i < len(result); i++ {
+	for _, v := range result {
 		fmt.Printf("TrainID: %d DepartureStationID: %d ArrivalStationID: %d  Price: %0.2f ArrivalTime: %v DepartureTime: %v\n",
-			result[i].TrainID, result[i].DepartureStationID, result[i].ArrivalStationID, result[i].Price, result[i].ArrivalTime, result[i].DepartureTime)
+			v.TrainID, v.DepartureStationID, v.ArrivalStationID, v.Price, v.ArrivalTime, v.DepartureTime)
 	}
 	fmt.Println("--------------------------------------------------------------")
 }
 
-//FindTrains шукаємо потяги що задовольняють введеним умовам користувача
+// FindTrains шукаємо потяги що задовольняють введеним умовам користувача
 func FindTrains(departureStation, arrivalStation, criteria string) (Trains, error) {
 	//записуємо підготовлені дані в trainsSlice
 	trainsSlice := readFile()
@@ -127,7 +128,7 @@ func FindTrains(departureStation, arrivalStation, criteria string) (Trains, erro
 	return result, nil
 }
 
-//readFile вичитує дані з файлу data.json, парсить їх, та повертає підготовлені дані для пошуку.
+// readFile вичитує дані з файлу data.json, парсить їх, та повертає підготовлені дані для пошуку.
 func readFile() Trains {
 	file, err := os.OpenFile(fName, os.O_RDONLY, os.FileMode(0600))
 	if os.IsNotExist(err) {
@@ -135,22 +136,20 @@ func readFile() Trains {
 	}
 	// оброюблюємо закриття файлу
 	defer closeFile(file)
-	byteValue, _ := ioutil.ReadAll(file)
+	byteValue, _ := io.ReadAll(file)
 	var uz Trains
 	//Додаткова перевірка валідності структури JSON(не вимагалась за умовою задачі)
-	isValid := json.Valid(byteValue)
-	if !isValid {
+	if isValid := json.Valid(byteValue); !isValid {
 		log.Fatal(invalidJSON)
 	}
 	//Обробка помилки при обробці даних з файлу
-	err = json.Unmarshal(byteValue, &uz)
-	if err != nil {
+	if err = json.Unmarshal(byteValue, &uz); err != nil {
 		log.Fatal(err)
 	}
 	return uz
 }
 
-//closeFile функція закриває файл
+// closeFile функція закриває файл
 func closeFile(f *os.File) {
 	err := f.Close()
 	if err != nil {
@@ -159,7 +158,7 @@ func closeFile(f *os.File) {
 	}
 }
 
-//UnmarshalJSON описуємо метод анмаршалінгу JSON для Train
+// UnmarshalJSON описуємо метод анмаршалінгу JSON для Train
 func (tr *Train) UnmarshalJSON(j []byte) error {
 	var rawData map[string]any
 	err := json.Unmarshal(j, &rawData)
@@ -167,55 +166,63 @@ func (tr *Train) UnmarshalJSON(j []byte) error {
 		return errors.New(unmarshalError)
 	}
 	for k, v := range rawData {
-		if k == "trainId" {
-			fl, ok := v.(float64)
-			if !ok {
-				return errors.New(parseErr + k)
+		switch k {
+		case "trainId":
+			{
+				fl, ok := v.(float64)
+				if !ok {
+					return errors.New(parseErr + k)
+				}
+				tr.TrainID = int(fl)
 			}
-			tr.TrainID = int(fl)
-		}
-		if k == "departureStationId" {
-			fl, ok := v.(float64)
-			if !ok {
-				return errors.New(parseErr + k)
+		case "departureStationId":
+			{
+				fl, ok := v.(float64)
+				if !ok {
+					return errors.New(parseErr + k)
+				}
+				tr.DepartureStationID = int(fl)
 			}
-			tr.DepartureStationID = int(fl)
-		}
-		if k == "arrivalStationId" {
-			fl, ok := v.(float64)
-			if !ok {
-				return errors.New(parseErr + k)
+		case "arrivalStationId":
+			{
+				fl, ok := v.(float64)
+				if !ok {
+					return errors.New(parseErr + k)
+				}
+				tr.ArrivalStationID = int(fl)
 			}
-			tr.ArrivalStationID = int(fl)
-		}
-		if k == "price" {
-			fl, ok := v.(float64)
-			if !ok {
-				return errors.New(parseErr + k)
+		case "price":
+			{
+				fl, ok := v.(float64)
+				if !ok {
+					return errors.New(parseErr + k)
+				}
+				tr.Price = float32(fl)
 			}
-			tr.Price = float32(fl)
-		}
-		if k == "arrivalTime" {
-			tv, ok := v.(string)
-			if !ok {
-				return errors.New(parseErr + k)
+		case "arrivalTime":
+			{
+				tv, ok := v.(string)
+				if !ok {
+					return errors.New(parseErr + k)
+				}
+				t, err := time.Parse(timeLayout, tv)
+				if err != nil {
+					return errors.New(parseErr + k)
+				}
+				tr.ArrivalTime = t
 			}
-			t, err := time.Parse(timeLayout, tv)
-			if err != nil {
-				return errors.New(parseErr + k)
+		case "departureTime":
+			{
+				tv, ok := v.(string)
+				if !ok {
+					return errors.New(parseErr + k)
+				}
+				t, err := time.Parse(timeLayout, tv)
+				if err != nil {
+					return errors.New(parseErr + k)
+				}
+				tr.DepartureTime = t
 			}
-			tr.ArrivalTime = t
-		}
-		if k == "departureTime" {
-			tv, ok := v.(string)
-			if !ok {
-				return errors.New(parseErr + k)
-			}
-			t, err := time.Parse(timeLayout, tv)
-			if err != nil {
-				return errors.New(parseErr + k)
-			}
-			tr.DepartureTime = t
 		}
 	}
 	return nil
